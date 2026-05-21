@@ -1,1 +1,0 @@
-/home/loc/ros2_ws/“/launch/gazebo_multi_nav2_world.launch.py

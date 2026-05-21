@@ -1,1 +1,0 @@
-/home/loc/ros2_ws/“/launch/nav2_bringup/rviz_launch.py
