@@ -1,0 +1,3 @@
+[console_scripts]
+do_an = my_robot.do_an:main
+

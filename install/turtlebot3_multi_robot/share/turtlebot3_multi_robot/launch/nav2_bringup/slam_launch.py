@@ -1,0 +1,1 @@
+/home/loc/ros2_ws/“/launch/nav2_bringup/slam_launch.py
