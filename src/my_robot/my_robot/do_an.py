@@ -15,9 +15,9 @@ class StableDWA(Node):
 
         super().__init__('stable_dwa')
 
-        # =====================================
+       
         # SUBSCRIBERS
-        # =====================================
+      
 
         self.create_subscription(
             LaserScan,
@@ -33,9 +33,9 @@ class StableDWA(Node):
             10
         )
 
-        # =====================================
+      
         # PUBLISHER
-        # =====================================
+       
 
         self.cmd_pub = self.create_publisher(
             Twist,
@@ -43,9 +43,8 @@ class StableDWA(Node):
             10
         )
 
-        # =====================================
         # DATA
-        # =====================================
+      
 
         self.scan_data = None
 
@@ -53,16 +52,16 @@ class StableDWA(Node):
         self.y = 0.0
         self.yaw = 0.0
 
-        # =====================================
+      
         # GOAL
-        # =====================================
+       
 
         self.goal_x = 5.0
         self.goal_y = 0.0
 
-        # =====================================
+        
         # DWA PARAMETERS
-        # =====================================
+      
 
         self.max_speed = 0.20
 
@@ -74,9 +73,9 @@ class StableDWA(Node):
 
         self.predict_time = 1.0
 
-        # =====================================
+    
         # TIMER
-        # =====================================
+        
 
         self.timer = self.create_timer(
             0.1,
@@ -87,17 +86,17 @@ class StableDWA(Node):
             'FINAL STABLE DWA STARTED'
         )
 
-    # =====================================
+   
     # SCAN CALLBACK
-    # =====================================
+   
 
     def scan_callback(self, msg):
 
         self.scan_data = np.array(msg.ranges)
 
-    # =====================================
+   
     # ODOM CALLBACK
-    # =====================================
+   
 
     def odom_callback(self, msg):
 
@@ -121,9 +120,8 @@ class StableDWA(Node):
             cosy_cosp
         )
 
-    # =====================================
+    
     # TRAJECTORY SIMULATION
-    # =====================================
 
     def simulate_trajectory(self, v, w):
 
@@ -145,9 +143,8 @@ class StableDWA(Node):
 
         return x, y, yaw
 
-    # =====================================
     # GOAL COST
-    # =====================================
+
 
     def goal_cost(self, x, y):
 
@@ -156,9 +153,8 @@ class StableDWA(Node):
             (self.goal_y - y) ** 2
         )
 
-    # =====================================
     # CONTROL LOOP
-    # =====================================
+  
 
     def control_loop(self):
 
@@ -167,11 +163,11 @@ class StableDWA(Node):
 
         cmd = Twist()
 
-        # =====================================
+     
         # WIDE FRONT DETECTION
         # Robot:
         # front = beginning of scan array
-        # =====================================
+       
 
         front_center = self.scan_data[0:25]
 
@@ -183,9 +179,9 @@ class StableDWA(Node):
 
         right = self.scan_data[-140:-80]
 
-        # =====================================
+       
         # REMOVE INVALID VALUES
-        # =====================================
+       
 
         front_center = front_center[
             np.isfinite(front_center)
@@ -220,9 +216,9 @@ class StableDWA(Node):
         right_mean = np.mean(right) \
             if len(right) > 0 else 0.0
 
-        # =====================================
+      
         # EMERGENCY OBSTACLE AVOIDANCE
-        # =====================================
+        
 
         if (
             front_min < 0.45 or
@@ -245,9 +241,9 @@ class StableDWA(Node):
 
             return
 
-        # =====================================
+       
         # DWA SEARCH
-        # =====================================
+       
 
         best_cost = 999999
 
@@ -298,9 +294,9 @@ class StableDWA(Node):
 
                     best_w = w
 
-        # =====================================
+    
         # PUBLISH CMD
-        # =====================================
+        
 
         cmd.linear.x = float(best_v)
 
