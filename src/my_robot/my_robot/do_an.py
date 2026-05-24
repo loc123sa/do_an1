@@ -12,14 +12,7 @@ from typing import List, Tuple, Optional
  
  
 class ImprovedStableDWADynamic(Node):
-    """
-    Enhanced DWA with Dynamic Obstacle Handling:
-    ✅ Tracks obstacle history and predicts future positions
-    ✅ Longer prediction horizon for moving obstacles
-    ✅ Checks collisions with both static and dynamic obstacles
-    ✅ Dynamic weight adjustment for moving environments
-    """
- 
+   
     def __init__(self):
         super().__init__('improved_stable_dwa_dynamic')
  
@@ -73,31 +66,31 @@ class ImprovedStableDWADynamic(Node):
         self.history_position_threshold = 0.1
         self.loop_detection_radius = 0.5
         
-        # ✨ NEW: DYNAMIC OBSTACLE TRACKING
+        # NEW: DYNAMIC OBSTACLE TRACKING
         self.obstacle_history = deque(maxlen=50)  # Store last 50 scan frames
         self.obstacle_positions = {}  # ID -> list of (x, y, t) positions
         self.obstacle_velocities = {}  # ID -> (vx, vy) estimated velocity
         self.last_frame_obstacles = None
         
         # COST FUNCTION WEIGHTS - ADJUSTED FOR DYNAMIC
-        self.weight_goal = 1.2  # ⬇️ DECREASED from 1.5 → 1.2
-        self.weight_obstacle = 3.5  # ⬆️ INCREASED from 2.0 → 3.5
+        self.weight_goal = 1.2  # DECREASED from 1.5 → 1.2
+        self.weight_obstacle = 3.5  # INCREASED from 2.0 → 3.5
         self.weight_turn = 0.4
         self.weight_speed = 0.2
-        self.weight_path_history = 0.3  # ⬇️ DECREASED from 0.8 → 0.3
-        self.weight_dynamic_collision = 1.5  # ✨ NEW weight for predicted collisions
+        self.weight_path_history = 0.3  # DECREASED from 0.8 → 0.3
+        self.weight_dynamic_collision = 1.5  # NEW weight for predicted collisions
         
         # TIMER
         self.timer = self.create_timer(0.1, self.control_loop)
         
-        self.get_logger().info('🚀 IMPROVED DWA FOR DYNAMIC MAP STARTED')
+        self.get_logger().info('IMPROVED DWA FOR DYNAMIC MAP STARTED')
  
     def scan_callback(self, msg):
         """Store laser scan data and track obstacles"""
         self.scan_data = np.array(msg.ranges)
         self.last_scan_time = self.get_clock().now().nanoseconds / 1e9
         
-        # ✨ NEW: Extract and track obstacle positions
+        #  NEW: Extract and track obstacle positions
         self.update_obstacle_history()
  
     def odom_callback(self, msg):
@@ -116,13 +109,10 @@ class ImprovedStableDWADynamic(Node):
                     (self.y - self.path_history[-1][1])**2) > self.history_position_threshold:
             self.path_history.append((self.x, self.y))
  
-    # ✨ ========== NEW FUNCTIONS FOR DYNAMIC OBSTACLE HANDLING ==========
+    #  NEW FUNCTIONS FOR DYNAMIC OBSTACLE HANDLING
     
     def update_obstacle_history(self):
-        """
-        ✨ Extract obstacle positions from laser scan
-        This allows us to track moving obstacles over time
-        """
+      
         if self.scan_data is None:
             return
         
@@ -150,10 +140,7 @@ class ImprovedStableDWADynamic(Node):
             self.estimate_obstacle_velocities()
  
     def estimate_obstacle_velocities(self):
-        """
-        ✨ Estimate velocity of obstacles by comparing positions over time
-        Uses simple position difference method
-        """
+       
         if len(self.obstacle_history) < 2:
             return
         
@@ -198,10 +185,7 @@ class ImprovedStableDWADynamic(Node):
  
     def predict_obstacle_position(self, obs_x: float, obs_y: float, 
                                  obs_id: int, predict_time: float) -> Tuple[float, float]:
-        """
-        ✨ Predict future position of an obstacle
-        Uses estimated velocity if available
-        """
+        
         if obs_id in self.obstacle_velocities:
             vx, vy = self.obstacle_velocities[obs_id]
             
@@ -215,13 +199,7 @@ class ImprovedStableDWADynamic(Node):
             return obs_x, obs_y
  
     def check_trajectory_collision_dynamic(self, trajectory: List[Tuple]) -> Tuple[float, float]:
-        """
-        ✨ Enhanced collision checking that considers:
-        1. Static obstacles (laser scan)
-        2. Dynamic obstacles (with predicted positions)
         
-        Returns: (min_distance, collision_risk_score)
-        """
         if self.scan_data is None:
             return 999, 0
         
@@ -243,7 +221,7 @@ class ImprovedStableDWADynamic(Node):
                     min_scan_dist = np.min(valid_ranges)
                     min_dist = min(min_dist, min_scan_dist)
         
-        # ✨ NEW: Check collision with PREDICTED dynamic obstacles
+        # NEW: Check collision with PREDICTED dynamic obstacles
         if self.last_frame_obstacles is not None:
             for obs_idx, (obs_x, obs_y, range_val) in enumerate(self.last_frame_obstacles):
                 # Predict where this obstacle will be
@@ -268,7 +246,7 @@ class ImprovedStableDWADynamic(Node):
         
         return min_dist, collision_risk
  
-    # ========== END NEW FUNCTIONS ==========
+    # END NEW FUNCTIONS 
  
     def simulate_trajectory(self, v, w, dt=0.1):
         """
@@ -312,10 +290,7 @@ class ImprovedStableDWADynamic(Node):
         return 0
  
     def path_history_cost(self, x, y):
-        """
-        ✨ MODIFIED: Reduced impact for dynamic environments
-        Need flexibility to re-route around moving obstacles
-        """
+        
         if len(self.path_history) < 5:
             return 0
         
@@ -331,9 +306,7 @@ class ImprovedStableDWADynamic(Node):
         return penalty
  
     def get_obstacle_metrics(self):
-        """
-        Extract detailed obstacle information from laser scan
-        """
+       
         if self.scan_data is None:
             return None, None, None, None, None
  
@@ -380,7 +353,7 @@ class ImprovedStableDWADynamic(Node):
                 cmd.angular.z = -0.8
             
             self.cmd_pub.publish(cmd)
-            self.get_logger().warn('🛑 EMERGENCY AVOIDANCE ACTIVATED')
+            self.get_logger().warn(' EMERGENCY AVOIDANCE ACTIVATED')
             return True
         
         if (front_min < self.danger_distance or
@@ -395,13 +368,13 @@ class ImprovedStableDWADynamic(Node):
                 cmd.angular.z = -0.4
             
             self.cmd_pub.publish(cmd)
-            self.get_logger().info('⚠️  HIGH CAUTION MODE')
+            self.get_logger().info(' HIGH CAUTION MODE')
             return True
  
         return False
  
     def control_loop(self):
-        """Main control loop - Enhanced DWA with dynamic obstacle handling"""
+        
         if self.scan_data is None:
             return
  
@@ -416,7 +389,7 @@ class ImprovedStableDWADynamic(Node):
                                     left_mean, right_mean):
             return
  
-        # ✨ Adaptive weights for dynamic situations
+        # Adaptive weights for dynamic situations
         if front_min < 0.6:
             self.weight_obstacle = 4.0  # Very high for close obstacles
             self.weight_goal = 0.8
@@ -441,7 +414,7 @@ class ImprovedStableDWADynamic(Node):
                 # Calculate costs
                 g_cost = self.goal_cost(tx, ty)
                 
-                # ✨ Use enhanced collision checking
+                # Use enhanced collision checking
                 min_traj_dist, collision_risk = self.check_trajectory_collision_dynamic(trajectory)
                 obs_cost = self.obstacle_cost(min_traj_dist) + collision_risk
                 
